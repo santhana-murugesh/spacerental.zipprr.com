@@ -1,0 +1,127 @@
+/* Mobile Responsive CSS for React Components */
+
+/* Mobile-first approach */
+* {
+  box-sizing: border-box;
+}
+
+/* Base mobile styles */
+@media (max-width: 767.98px) {
+  /* Container adjustments */
+  .container {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  
+  /* Typography scaling */
+  h1 { font-size: 2rem !important; }
+  h2 { font-size: 1.75rem !important; }
+  h3 { font-size: 1.5rem !important; }
+  h4 { font-size: 1.25rem !important; }
+  h5 { font-size: 1.125rem !important; }
+  h6 { font-size: 1rem !important; }
+  
+  /* Spacing adjustments */
+  .p-4 { padding: 1rem !important; }
+  .p-5 { padding: 1.25rem !important; }
+  .px-4 { padding-left: 1rem !important; padding-right: 1rem !important; }
+  .px-5 { padding-left: 1.25rem !important; padding-right: 1.25rem !important; }
+  .py-4 { padding-top: 1rem !important; padding-bottom: 1rem !important; }
+  .py-5 { padding-top: 1.25rem !important; padding-bottom: 1.25rem !important; }
+  
+  .m-4 { margin: 1rem !important; }
+  .m-5 { margin: 1.25rem !important; }
+  .mx-4 { margin-left: 1rem !important; margin-right: 1rem !important; }
+  .mx-5 { margin-left: 1.25rem !important; margin-right: 1.25rem !important; }
+  .my-4 { margin-top: 1rem !important; margin-bottom: 1rem !important; }
+  .my-5 { margin-top: 1.25rem !important; margin-bottom: 1.25rem !important; }
+  
+  /* Grid adjustments */
+  .grid { grid-template-columns: 1fr !important; }
+  .grid-cols-2 { grid-template-columns: repeat(1, 1fr) !important; }
+  .grid-cols-3 { grid-template-columns: repeat(1, 1fr) !important; }
+  .grid-cols-4 { grid-template-columns: repeat(2, 1fr) !important; }
+  
+  /* Flex adjustments */
+  .flex-row { flex-direction: column !important; }
+  .flex-col { flex-direction: column !important; }
+  
+  /* Width adjustments */
+  .w-full { width: 100% !important; }
+  .w-auto { width: auto !important; }
+  
+  /* Text alignment */
+  .text-center { text-align: center !important; }
+  .text-left { text-align: left !important; }
+  .text-right { text-align: right !important; }
+  
+  /* Display utilities */
+  .hidden { display: none !important; }
+  .block { display: block !important; }
+  .flex { display: flex !important; }
+  .grid { display: grid !important; }
+  
+  /* Button adjustments */
+  .btn {
+    width: 100% !important;
+    padding: 12px 20px !important;
+    font-size: 16px !important;
+    min-height: 44px !important;
+  }
+  
+  /* Form adjustments */
+  input, select, textarea {
+    width: 100% !important;
+    font-size: 16px !important;
+    min-height: 44px !important;
+  }
+  
+  /* Card adjustments */
+  .card {
+    margin-bottom: 1rem !important;
+  }
+  
+  .card-body {
+    padding: 1rem !important;
+  }
+}
+
+/* Small tablets */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .grid-cols-2 { grid-template-columns: repeat(2, 1fr) !important; }
+  .grid-cols-3 { grid-template-columns: repeat(2, 1fr) !important; }
+  .grid-cols-4 { grid-template-columns: repeat(3, 1fr) !important; }
+  
+  .flex-row { flex-direction: row !important; }
+  
+  .btn {
+    width: auto !important;
+  }
+}
+
+/* Large tablets and small desktops */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  .grid-cols-3 { grid-template-columns: repeat(3, 1fr) !important; }
+  .grid-cols-4 { grid-template-columns: repeat(4, 1fr) !important; }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .btn, button, input[type="button"], input[type="submit"], a {
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
+  
+  .scroll-container {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .high-dpi-image {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}

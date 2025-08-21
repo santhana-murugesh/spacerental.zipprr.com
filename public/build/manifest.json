@@ -1,0 +1,57 @@
+{
+  "_browser-ponyfill-CMhlYALF.js": {
+    "file": "assets/browser-ponyfill-CMhlYALF.js",
+    "name": "browser-ponyfill",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.jsx"
+    ]
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-BoR-Z3dA.css",
+    "src": "resources/css/app.css",
+    "isEntry": true,
+    "names": [
+      "app.css"
+    ]
+  },
+  "resources/js/app.jsx": {
+    "file": "assets/app-tuVSO-ex.js",
+    "name": "app",
+    "src": "resources/js/app.jsx",
+    "isEntry": true,
+    "dynamicImports": [
+      "_browser-ponyfill-CMhlYALF.js"
+    ],
+    "css": [
+      "assets/app-Cpjo03Uk.css"
+    ],
+    "assets": [
+      "assets/Vector-B09OIZ0G.png",
+      "assets/Vector1-DW7sPwC1.png",
+      "assets/Vector2-DyOH81s1.png",
+      "assets/Vector3-PWOYMurj.png",
+      "assets/Vector4-B3Wp6Omm.png"
+    ]
+  },
+  "resources/js/assets/Vector.png": {
+    "file": "assets/Vector-B09OIZ0G.png",
+    "src": "resources/js/assets/Vector.png"
+  },
+  "resources/js/assets/Vector1.png": {
+    "file": "assets/Vector1-DW7sPwC1.png",
+    "src": "resources/js/assets/Vector1.png"
+  },
+  "resources/js/assets/Vector2.png": {
+    "file": "assets/Vector2-DyOH81s1.png",
+    "src": "resources/js/assets/Vector2.png"
+  },
+  "resources/js/assets/Vector3.png": {
+    "file": "assets/Vector3-PWOYMurj.png",
+    "src": "resources/js/assets/Vector3.png"
+  },
+  "resources/js/assets/Vector4.png": {
+    "file": "assets/Vector4-B3Wp6Omm.png",
+    "src": "resources/js/assets/Vector4.png"
+  }
+}
