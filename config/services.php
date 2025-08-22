@@ -40,8 +40,8 @@ return [
   ],
 
   'stripe' => [
-    'key' => env('STRIPE_KEY'),
-    'secret' => env('STRIPE_SECRET'),
+    'key' => null, // Will be set dynamically from database
+    'secret' => null, // Will be set dynamically from database
   ],
 
 ];

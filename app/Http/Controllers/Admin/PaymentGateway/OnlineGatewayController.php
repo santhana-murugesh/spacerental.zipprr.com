@@ -151,12 +151,8 @@ class OnlineGatewayController extends Controller
             'status' => $request->flutterwave_status
         ]);
 
-        $array = [
-            'FLW_PUBLIC_KEY' => $request->flutterwave_public_key,
-            'FLW_SECRET_KEY' => $request->flutterwave_secret_key
-        ];
-
-        setEnvironmentValue($array);
+        // Remove setEnvironmentValue to prevent writing to .env file
+        // The system will now use database values directly
         Artisan::call('config:clear');
 
         Session::flash('success', __('Flutterwave\'s information updated successfully') . '!');
@@ -244,9 +240,8 @@ class OnlineGatewayController extends Controller
             'status' => $request->mollie_status
         ]);
 
-        $array = ['MOLLIE_KEY' => $request->mollie_key];
-
-        setEnvironmentValue($array);
+        // Remove setEnvironmentValue to prevent writing to .env file
+        // The system will now use database values directly
         Artisan::call('config:clear');
 
         Session::flash('success', __('Mollie\'s information updated successfully') . '!');
@@ -278,12 +273,8 @@ class OnlineGatewayController extends Controller
             'status' => $request->stripe_status
         ]);
 
-        $array = [
-            'STRIPE_KEY' => $request->stripe_key,
-            'STRIPE_SECRET' => $request->stripe_secret
-        ];
-
-        setEnvironmentValue($array);
+        // Remove setEnvironmentValue to prevent writing to .env file
+        // The system will now use database values directly
         Artisan::call('config:clear');
 
         Session::flash('success', __('Stripe\'s information updated successfully') . '!');
@@ -321,15 +312,8 @@ class OnlineGatewayController extends Controller
             'status' => $request->paytm_status
         ]);
 
-        $array = [
-            'PAYTM_ENVIRONMENT' => $request->paytm_environment,
-            'PAYTM_MERCHANT_KEY' => $request->paytm_merchant_key,
-            'PAYTM_MERCHANT_ID' => $request->paytm_merchant_mid,
-            'PAYTM_MERCHANT_WEBSITE' => $request->paytm_merchant_website,
-            'PAYTM_INDUSTRY_TYPE' => $request->paytm_industry_type
-        ];
-
-        setEnvironmentValue($array);
+        // Remove setEnvironmentValue to prevent writing to .env file
+        // The system will now use database values directly
         Artisan::call('config:clear');
 
         Session::flash('success', __('Paytm\'s information updated successfully') . '!');
@@ -417,13 +401,8 @@ class OnlineGatewayController extends Controller
             'status' => $request->status
         ]);
 
-        $array = [
-            'MYFATOORAH_TOKEN' => $request->token,
-            'MYFATOORAH_CALLBACK_URL' => route('myfatoorah_callback'),
-            'MYFATOORAH_ERROR_URL' => route('myfatoorah_cancel'),
-        ];
-
-        setEnvironmentValue($array);
+        // Remove setEnvironmentValue to prevent writing to .env file
+        // The system will now use database values directly
         Artisan::call('config:clear');
 
         Session::flash('success', __('Updated Myfatoorah\'s Information Successfully') . '!');
@@ -600,15 +579,11 @@ class OnlineGatewayController extends Controller
             'status' => $request->status
         ]);
 
-        $array = [
-            'XENDIT_SECRET_KEY' => $request->secret_key,
-        ];
-
-        setEnvironmentValue($array);
+        // Remove setEnvironmentValue to prevent writing to .env file
+        // The system will now use database values directly
         Artisan::call('config:clear');
 
         Session::flash('success', __('Updated Xendit\' Information Successfully') . '!');
-
 
         return redirect()->back();
     }

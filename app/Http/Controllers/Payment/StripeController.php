@@ -21,11 +21,8 @@ class StripeController extends Controller
 {
     public function __construct()
     {
-        //Set Spripe Keys
-        $stripe = OnlineGateway::where('keyword', 'stripe')->first();
-        $stripeConf = json_decode($stripe->information, true);
-        Config::set('services.stripe.key', $stripeConf["key"]);
-        Config::set('services.stripe.secret', $stripeConf["secret"]);
+        // Stripe configuration is now handled by PaymentGatewayServiceProvider
+        // No need to manually set config values here
     }
 
     public function paymentProcess(Request $request, $_amount, $_title, $_success_url, $_cancel_url)
@@ -53,8 +50,21 @@ class StripeController extends Controller
                 'amount' => $price,
                 'description' => $title,
                 'receipt_email' => $request->email,
+                // Required customer information for Indian export compliance
+                'shipping' => [
+                    'name' => $vendorInfo != null ? $vendorInfo->name : '',
+                    'address' => [
+                        'line1' => 'Vendor Address',
+                        'city' => 'Unknown',
+                        'state' => 'Unknown',
+                        'country' => 'IN'
+                    ]
+                ],
                 'metadata' => [
                     'customer_name' => $vendorInfo != null ? $vendorInfo->name : '',
+                    'customer_email' => $request->email,
+                    'customer_phone' => $request->phone ?? '',
+                    'vendor_id' => $request->vendor_id
                 ]
             ]);
 
