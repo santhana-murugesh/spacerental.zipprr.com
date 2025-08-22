@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <input type="text" name="name"/>
+
+    <script>
+        const abort = new AbortController();
+        document.addEventListener('DOMContentLoaded', function() {
+            const input = document.querySelector('input[name="name"]');
+            abort.signal
+            abort.abort();
+            input.addEventListener('input', function() {
+                fetch('/api/submit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name: input.value }),
+                    signal:abort.signal
+                })
+            });
+        });
+    </script>
+</body>
+</html>

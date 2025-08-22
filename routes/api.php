@@ -132,6 +132,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/room/online-booking', 'FrontEnd\BookingController@apiOnlineBooking')->name('api.room.online-booking');
     
     Route::get('/bookings', 'FrontEnd\BookingController@getUserBookings')->name('api.bookings');
+    Route::delete('/bookings/{id}', 'FrontEnd\BookingController@deleteUserBooking')->name('api.bookings.delete');
     
     Route::post('/user/update-profile', 'FrontEnd\UserController@apiUpdateProfile')->name('api.user.update_profile');
     Route::post('/user/update-password', 'FrontEnd\UserController@apiUpdatePassword')->name('api.user.update_password');

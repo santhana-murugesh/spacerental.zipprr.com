@@ -19,9 +19,7 @@ Route::get('/offline', 'FrontEnd\HomeController@offline')->middleware('change.la
 Route::get('/login', function () {
   return view('app'); 
 })->name('frontend.login');
-Route::get('/hotels/{id}', function () {
-  return view('app'); 
-})->name('frontend.hotels.details');
+
 Route::get('/search', function () {
   return view('app'); 
 })->name('frontend.search');
@@ -138,13 +136,15 @@ Route::prefix('/admin')->group(function () {
 | Custom Page Route For UI
 |--------------------------------------------------------------------------
 */
-Route::get('/{slug}', 'FrontEnd\PageController@page')->name('dynamic_page')->middleware('change.lang')->where('slug', '^(?!bookings|favorites|user|hotels|search|checkout|login|about-us).*$');
+Route::get('/{slug}', 'FrontEnd\PageController@page')->name('dynamic_page')->middleware('change.lang')->where('slug', '^(?!bookings|favorites|user|hotels|search|checkout|login|about-us|rooms).*$');
 Route::get('/user/{any?}', function () {
   return view('app'); 
 })->where('any', '.*')->name('frontend.user.any');
-Route::get('/hotel/{any?}', function () {
+
+Route::get('/hotels/{id?}', function () {
   return view('app'); 
-})->where('any', '.*')->name('frontend.hotel.any');
+})->name('frontend.hotels.react');
+
 Route::fallback(function () {
   return view('app'); 
 })->middleware('change.lang');

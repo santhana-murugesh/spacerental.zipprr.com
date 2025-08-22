@@ -77,6 +77,16 @@ export const Dashboard = ({
       if (response.ok) {
         const data = await response.json();
         console.log('Dashboard data:', data);
+        console.log('Recent bookings:', data.recent_bookings);
+        if (data.recent_bookings && data.recent_bookings.length > 0) {
+          console.log('First booking structure:', {
+            hotel_room: data.recent_bookings[0].hotel_room,
+            hotel_room_hotel: data.recent_bookings[0].hotel_room?.hotel,
+            hotel_room_hotel_contents: data.recent_bookings[0].hotel_room?.hotel?.hotel_contents,
+            payment_status: data.recent_bookings[0].payment_status,
+            payment_method: data.recent_bookings[0].payment_method
+          });
+        }
         setDashboardStats(data.stats);
         setRecentBookings(data.recent_bookings || []);
         setDashboardWishlists({
@@ -133,33 +143,27 @@ export const Dashboard = ({
     return hotel.title || hotel.name || 'Meeting Space Hire';
   };
 
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case 'confirmed':
-      case 'approved':
-        return 'bg-green-100 text-green-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'cancelled':
-      case 'rejected':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+  const getPaymentStatusBadge = (paymentStatus) => {
+    if (paymentStatus === 1 || paymentStatus === '1') {
+      return 'bg-green-100 text-green-800';
+    } else if (paymentStatus === 2 || paymentStatus === '2') {
+      return 'bg-red-100 text-red-800';
+    } else if (paymentStatus === 0 || paymentStatus === '0') {
+      return 'bg-orange-100 text-orange-800';
+    } else {
+      return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'confirmed':
-      case 'approved':
-        return 'Confirmed';
-      case 'pending':
-        return 'Pending';
-      case 'cancelled':
-      case 'rejected':
-        return 'Cancelled';
-      default:
-        return 'Unknown';
+  const getPaymentStatusText = (paymentStatus) => {
+    if (paymentStatus === 1 || paymentStatus === '1') {
+      return 'Completed';
+    } else if (paymentStatus === 2 || paymentStatus === '2') {
+      return 'Rejected';
+    } else if (paymentStatus === 0 || paymentStatus === '0') {
+      return 'Pending';
+    } else {
+      return paymentStatus || 'Unknown';
     }
   };
 
@@ -430,7 +434,7 @@ export const Dashboard = ({
                   <th className="text-left py-3 px-4 font-medium text-gray-600">Space</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-600">Date/Time</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-600">Location</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Status</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">Payment Status</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-600">Actions</th>
                 </tr>
               </thead>
@@ -438,24 +442,25 @@ export const Dashboard = ({
                 {recentBookings.map((booking) => (
                   <tr key={booking.id} className="border-b border-gray-100">
                     <td className="py-4 px-4 font-medium">
-                      {booking.hotelRoom?.hotel?.hotel_title || 'Hotel'} - {booking.hotelRoom?.room_content?.[0]?.title || 'Room'}
+                      {booking.hotel_room?.hotel?.hotel_contents?.[0]?.title || 'Hotel'} - {booking.hotel_room?.room_content?.[0]?.title || 'Room'}
                     </td>
                     <td className="py-4 px-4 text-gray-600">
                       {new Date(booking.check_in_date).toLocaleDateString()}
                       {booking.check_in_time && `, ${booking.check_in_time}`}
                     </td>
                     <td className="py-4 px-4 text-gray-600">
-                      {[booking.hotelRoom?.hotel?.city_name, booking.hotelRoom?.hotel?.state_name, booking.hotelRoom?.hotel?.country_name]
+                      {booking.hotel_room?.hotel?.hotel_contents?.[0]?.address || 
+                       [booking.hotel_room?.hotel?.city_name, booking.hotel_room?.hotel?.state_name, booking.hotel_room?.hotel?.country_name]
                         .filter(Boolean)
-                        .join(', ')}
+                        .join(', ') || 'Location not specified'}
                     </td>
                     <td className="py-4 px-4">
-                      <span className={`px-3 py-1 rounded-full text-sm ${getStatusBadge(booking.status)}`}>
-                        {getStatusText(booking.status)}
+                      <span className={`px-3 py-1 rounded-full text-sm ${getPaymentStatusBadge(booking.payment_status)}`}>
+                        {getPaymentStatusText(booking.payment_status)}
                       </span>
                     </td>
                     <td className="py-4 px-4">
-                      <Link to={`/booking/${booking.id}`} className="text-blue-600 hover:text-blue-700">
+                      <Link to={`/hotels/${booking.hotel_room?.hotel?.id}`} className="text-blue-600 hover:text-blue-700">
                         View Details
                       </Link>
                     </td>

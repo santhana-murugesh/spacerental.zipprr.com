@@ -788,14 +788,12 @@ export const SearchPage = () => {
       }
     } catch (error) {
       console.error('Error fetching whitelisted hotels:', error);
-      // Set empty set on error to prevent undefined state
       setWhitelistedHotels(new Set());
     }
   };
   const toggleWishlist = async (hotelId, event) => {
     event.stopPropagation();
     
-    // Check if user is authenticated
     if (!user) {
       setShowLogin(true);
       return;

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from './AuthContext'
 import { DashboardLayout } from './DashboardLayout'
+import Swal from 'sweetalert2'
 import {
   FaCalendarAlt,
   FaClock,
@@ -9,18 +10,24 @@ import {
   FaEye,
   FaCheckCircle,
   FaTimesCircle,
-  FaExclamationTriangle
+  FaExclamationTriangle,
+  FaCreditCard,
+  FaImage
 } from 'react-icons/fa'
+
 export const MyBookings = () => {
   const { user, authLoading } = useAuth();
+  const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
+  const [detailModal, setDetailModal] = useState({ open: false, booking: null });
   const API_BASE_URL =
     window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
       ? import.meta.env.VITE_API_BASE_URL_LOCAL
       : import.meta.env.VITE_API_BASE_URL;
+
   const fetchBookings = async () => {
     try {
       setLoading(true);
@@ -43,6 +50,22 @@ export const MyBookings = () => {
         const userBookings = (data.bookings || []).filter(booking =>
           booking.user_id === user.id
         );
+        
+        // Debug logging to see the actual data structure
+        console.log('Fetched bookings data:', userBookings);
+        if (userBookings.length > 0) {
+          console.log('First booking hotel data:', {
+            hotel_room: userBookings[0].hotel_room,
+            hotel_room_hotel: userBookings[0].hotel_room?.hotel,
+            hotel_room_hotel_contents: userBookings[0].hotel_room?.hotel?.hotel_contents
+          });
+          console.log('First booking payment data:', {
+            payment_status: userBookings[0].payment_status,
+            payment_method: userBookings[0].payment_method,
+            order_number: userBookings[0].order_number
+          });
+        }
+        
         setBookings(userBookings);
       } else if (response.status === 401) {
         const errorText = await response.text();
@@ -69,6 +92,55 @@ export const MyBookings = () => {
       setLoading(false);
     }
   };
+
+  const deleteBooking = async (id) => {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const token = localStorage.getItem('jwt_token');
+        const res = await fetch(`${API_BASE_URL}/api/bookings/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+          }
+        });
+        if (res.ok) {
+          setBookings(prev => prev.filter(b => b.id !== id));
+          Swal.fire(
+            'Deleted!',
+            'Your booking has been deleted.',
+            'success'
+          );
+        } else {
+          const data = await res.json().catch(() => ({}));
+          setError(data.message || 'Failed to delete booking');
+          Swal.fire(
+            'Error!',
+            data.message || 'Failed to delete booking',
+            'error'
+          );
+        }
+      } catch (e) {
+        setError('Failed to delete booking');
+        Swal.fire(
+          'Error!',
+          'Failed to delete booking',
+          'error'
+        );
+      }
+    }
+  };
+
   const getStatusBadge = (status) => {
     const statusConfig = {
       confirmed: {
@@ -100,12 +172,20 @@ export const MyBookings = () => {
       </span>
     );
   };
+
   const filteredBookings = filterStatus === 'all'
     ? bookings
     : bookings.filter(booking => {
-      const matches = booking.order_status === filterStatus;
-      return matches;
+      if (filterStatus === 'completed') {
+        return booking.payment_status === 1 || booking.payment_status === '1';
+      } else if (filterStatus === 'pending') {
+        return booking.payment_status === 0 || booking.payment_status === '0';
+      } else if (filterStatus === 'rejected') {
+        return booking.payment_status === 2 || booking.payment_status === '2';
+      }
+      return false;
     });
+
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -115,6 +195,7 @@ export const MyBookings = () => {
       day: 'numeric'
     });
   };
+
   const formatTime = (timeString) => {
     if (!timeString) return 'N/A';
     const [hours, minutes] = timeString.split(':');
@@ -123,11 +204,13 @@ export const MyBookings = () => {
     const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
     return `${displayHour}:${minutes} ${ampm}`;
   };
+
   useEffect(() => {
     if (user && !authLoading) {
       fetchBookings();
     }
   }, [user, authLoading]);
+
   return (
     <DashboardLayout title="My Bookings" showRefresh={true} onRefresh={fetchBookings}>
       {loading ? (
@@ -166,13 +249,13 @@ export const MyBookings = () => {
                 All Bookings
               </button>
               <button
-                onClick={() => setFilterStatus('confirmed')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterStatus === 'confirmed'
+                onClick={() => setFilterStatus('completed')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterStatus === 'completed'
                     ? 'bg-green-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
               >
-                Confirmed
+                Completed
               </button>
               <button
                 onClick={() => setFilterStatus('pending')}
@@ -183,23 +266,15 @@ export const MyBookings = () => {
               >
                 Pending
               </button>
+
               <button
-                onClick={() => setFilterStatus('completed')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterStatus === 'completed'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-              >
-                Completed
-              </button>
-              <button
-                onClick={() => setFilterStatus('cancelled')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterStatus === 'cancelled'
+                onClick={() => setFilterStatus('rejected')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterStatus === 'rejected'
                     ? 'bg-red-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
               >
-                Cancelled
+                Rejected
               </button>
             </div>
           </div>
@@ -225,96 +300,120 @@ export const MyBookings = () => {
               )}
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                <div className="grid grid-cols-12 gap-4 text-sm font-semibold text-gray-700">
+                  <div className="col-span-2">Booking No.</div>
+                  <div className="col-span-3">Room</div>
+                  <div className="col-span-1">Vendor</div>
+                  <div className="col-span-2">Customer</div>
+                  <div className="col-span-1">Amount</div>
+                  <div className="col-span-1">Payment Method</div>
+                  <div className="col-span-1">Payment Status</div>
+                  <div className="col-span-1">Actions</div>
+                </div>
+              </div>
+              
               {filteredBookings.map((booking) => (
-                <div key={booking.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                  <div className="p-6">
-                    {booking.hotel_room?.feature_image && (
-                      <div className="mb-4">
-                        <img
-                          src={`${API_BASE_URL}/assets/img/rooms/${booking.hotel_room.feature_image}`}
-                          alt="Hotel Room"
-                          className="w-full h-48 object-cover rounded-lg"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                          }}
-                        />
+                <div key={booking.id} className="px-6 py-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50">
+                  <div className="grid grid-cols-12 gap-4 items-center text-sm">
+                    <div className="col-span-2">
+                      <span className="font-medium text-gray-900 text-xs">#{booking.order_number}</span>
+                    </div>
+                    
+                    <div className="col-span-3">
+                      <div className="text-blue-600 hover:text-blue-800 cursor-pointer text-sm font-medium">
+                        {booking.hotel_room?.room_content?.[0]?.title || 'Room'}
                       </div>
-                    )}
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="text-xl font-semibold text-gray-800">
-                            {booking.hotel?.hotel_contents?.[0]?.title ||
-                              booking.hotel_room?.hotel?.hotel_contents?.[0]?.title ||
-                              (booking.hotel_room?.hotel_id ? `Hotel ${booking.hotel_room.hotel_id}` : 'Hotel')}
-                          </h3>
-                          {getStatusBadge(booking.order_status)}
-                        </div>
-                        <p className="text-gray-600 mb-1">{booking.hotel_room?.room_content?.[0]?.title || 'Room'}</p>
-                        <p className="text-sm text-gray-500">Booking Code: {booking.order_number}</p>
+                      <div 
+                        className="text-xs text-blue-500 hover:text-blue-700 cursor-pointer mt-0.5"
+                        onClick={() => {
+                          const hotelId = booking.hotel_room?.hotel?.id;
+                          if (hotelId) {
+                            navigate(`/hotels/${hotelId}`);
+                          }
+                        }}
+                      >
+                        {booking.hotel_room?.hotel?.hotel_contents?.[0]?.title || 'Hotel'}
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                      <div className="flex items-center gap-2">
-                        <FaCalendarAlt className="text-gray-400" />
-                        <div>
-                          <p className="text-sm text-gray-500">Date</p>
-                          <p className="font-medium text-gray-800">{formatDate(booking.check_in_date)}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <FaClock className="text-gray-400" />
-                        <div>
-                          <p className="text-sm text-gray-500">Time</p>
-                          <p className="font-medium text-gray-800">
-                            {formatTime(booking.check_in_time)}
-                            {booking.check_out_time && ` - ${formatTime(booking.check_out_time)}`}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <FaMapMarkerAlt className="text-gray-400" />
-                        <div>
-                          <p className="text-sm text-gray-500">Location</p>
-                          <p className="font-medium text-gray-800">
-                            {booking.hotel?.hotel_contents?.[0]?.address ||
-                              booking.hotel_room?.hotel?.hotel_contents?.[0]?.address ||
-                              (booking.hotel_room?.hotel_id ? `Hotel ${booking.hotel_room.hotel_id}` : 'Location')}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-gray-400 rounded-full"></div>
-                        <div>
-                          <p className="text-sm text-gray-500">Attendees</p>
-                          <p className="font-medium text-gray-800">{booking.adult + (booking.children || 0)} people</p>
-                        </div>
-                      </div>
+                    
+                    <div className="col-span-1">
+                      {booking.vendor_id ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          Admin
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 text-xs">--</span>
+                      )}
                     </div>
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <span><strong>Duration:</strong> {booking.hour} hours</span>
-                        <span><strong>Total:</strong> ${booking.grand_total}</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Link
-                          to={`/booking/${booking.id}`}
-                          className="inline-flex items-center gap-2 px-4 py-2 text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors"
+                    
+                    <div className="col-span-2">
+                      <span className="text-blue-600 hover:text-blue-800 cursor-pointer text-sm">
+                        {booking.booking_name || 'user'}
+                      </span>
+                    </div>
+                    
+                    <div className="col-span-1">
+                      <div className="text-gray-900 font-medium text-sm">${booking.grand_total}</div>
+                      <div className="text-xs text-gray-500">USD</div>
+                    </div>
+                    
+                    <div className="col-span-1">
+                      <span className="text-gray-600 text-xs">
+                        {booking.payment_method ? 
+                          (booking.payment_method.length > 10 ? 
+                            booking.payment_method.substring(0, 10) + '...' : 
+                            booking.payment_method) 
+                          : '--'}
+                      </span>
+                    </div>
+                    
+                    <div className="col-span-1">
+                      {(() => {
+                        const status = booking.payment_status;
+                        if (status === 1 || status === '1') {
+                          return (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              Completed
+                            </span>
+                          );
+                        } else if (status === 2 || status === '2') {
+                          return (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                              Rejected
+                            </span>
+                          );
+                        } else if (status === 0 || status === '0') {
+                          return (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                              Pending
+                            </span>
+                          );
+                        } else {
+                          return (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                              {status || 'Unknown'}
+                            </span>
+                          );
+                        }
+                      })()}
+                    </div>
+                    
+                    <div className="col-span-1">
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => setDetailModal({ open: true, booking })}
+                          className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200"
                         >
-                          <FaEye className="w-4 h-4" />
-                          View Details
-                        </Link>
-                        {booking.order_status === 'pending' && (
-                          <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm">
-                            Cancel Booking
-                          </button>
-                        )}
-                        {booking.order_status === 'confirmed' && (
-                          <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm">
-                            Modify Booking
-                          </button>
-                        )}
+                          <FaEye className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => deleteBooking(booking.id)}
+                          className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800 hover:bg-red-200"
+                        >
+                          Delete
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -322,6 +421,108 @@ export const MyBookings = () => {
               ))}
             </div>
           )}
+        </div>
+      )}
+      {detailModal.open && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white w-full max-w-2xl rounded-lg shadow-lg p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Booking Summary</h3>
+              <button onClick={() => setDetailModal({ open: false, booking: null })} className="text-gray-500 hover:text-gray-700">✕</button>
+            </div>
+            {detailModal.booking && (
+              <div className="space-y-4">
+                {detailModal.booking.hotel_room?.feature_image && (
+                  <div className="text-center">
+                    <img
+                      src={`${API_BASE_URL}/assets/img/rooms/${detailModal.booking.hotel_room.feature_image}`}
+                      alt="Room"
+                      className="w-full max-w-md h-48 object-cover rounded-lg mx-auto"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-gray-500">Hotel</p>
+                    <p className="font-medium text-gray-800">{detailModal.booking.hotel_room?.hotel?.hotel_contents?.[0]?.title || 'Hotel'}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Booking Code</p>
+                    <p className="font-medium text-gray-800">{detailModal.booking.order_number}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Date</p>
+                    <p className="font-medium text-gray-800">{formatDate(detailModal.booking.check_in_date)}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Time</p>
+                    <p className="font-medium text-gray-800">{formatTime(detailModal.booking.check_in_time)}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Attendees</p>
+                    <p className="font-medium text-gray-800">{detailModal.booking.adult + (detailModal.booking.children || 0)} people</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Total</p>
+                    <p className="font-medium text-gray-800">${detailModal.booking.grand_total}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Duration</p>
+                    <p className="font-medium text-gray-800">{detailModal.booking.hour} hours</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Payment Method</p>
+                    <p className="font-medium text-gray-800 flex items-center gap-2">
+                      <FaCreditCard className="text-gray-400" />
+                      {detailModal.booking.payment_method || 'Not specified'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Payment Status</p>
+                    <p className="font-medium text-gray-800">
+                      {(() => {
+                        const status = detailModal.booking.payment_status;
+                        if (status === 1 || status === '1') {
+                          return 'Completed';
+                        } else if (status === 2 || status === '2') {
+                          return 'Rejected';
+                        } else if (status === 0 || status === '0') {
+                          return 'Pending';
+                        } else {
+                          return status || 'Unknown';
+                        }
+                      })()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Room</p>
+                    <p className="font-medium text-gray-800">{detailModal.booking.hotel_room?.room_content?.[0]?.title || 'Room'}</p>
+                  </div>
+                </div>
+                
+                <div className="col-span-1 md:col-span-2">
+                  <p className="text-gray-500">Location</p>
+                  <p className="font-medium text-gray-800">{detailModal.booking.hotel_room?.hotel?.hotel_contents?.[0]?.address || 'Location not specified'}</p>
+                </div>
+                
+                {detailModal.booking.additional_service && (
+                  <div className="col-span-1 md:col-span-2">
+                    <p className="text-gray-500">Additional Services</p>
+                    <div className="bg-gray-50 p-3 rounded">
+                      <pre className="text-sm text-gray-700 whitespace-pre-wrap">{JSON.stringify(detailModal.booking.additional_service, null, 2)}</pre>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            <div className="mt-6 text-right">
+              <button onClick={() => setDetailModal({ open: false, booking: null })} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Close</button>
+            </div>
+          </div>
         </div>
       )}
     </DashboardLayout>

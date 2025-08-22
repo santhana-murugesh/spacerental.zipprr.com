@@ -33,9 +33,10 @@ if (typeof document !== 'undefined') {
   styleElement.textContent = customStyles;
   document.head.appendChild(styleElement);
 }
-function HotelDetails() {
+function HotelDetails({ hotelId }) {
   const { id } = useParams();
   const navigate = useNavigate();
+  const actualHotelId = hotelId || id;
   const [hotel, setHotel] = useState(null);
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -453,12 +454,12 @@ function HotelDetails() {
         setLoading(true);
         const routesRes = await fetch(`${API_BASE_URL}/api/routes`);
         const routes = await routesRes.json();
-        const hotelRes = await fetch(`${routes.hotelsFilterByBounds}?hotelId=${id}`);
+        const hotelRes = await fetch(`${routes.hotelsFilterByBounds}?hotelId=${actualHotelId}`);
         const hotelJson = await hotelRes.json();
         const selectedHotel = hotelJson?.success && Array.isArray(hotelJson.hotels) && hotelJson.hotels.length
           ? hotelJson.hotels[0]
           : null;
-        const roomsRes = await fetch(`${API_BASE_URL}/api/rooms/filter-by-bounds?hotelId=${id}`);
+        const roomsRes = await fetch(`${API_BASE_URL}/api/rooms/filter-by-bounds?hotelId=${actualHotelId}`);
         const roomsJson = await roomsRes.json();
         let similarHotelsData = [];
         if (selectedHotel?.city_id) {
@@ -467,7 +468,7 @@ function HotelDetails() {
             const similarJson = await similarRes.json();
             if (similarJson?.success && Array.isArray(similarJson.hotels)) {
               similarHotelsData = similarJson.hotels
-                .filter(h => h.id !== parseInt(id))
+                .filter(h => h.id !== parseInt(actualHotelId))
                 .slice(0, 4);
             }
           } catch (error) {
@@ -491,7 +492,7 @@ function HotelDetails() {
     return () => {
       isMounted = false;
     };
-  }, [API_BASE_URL, id]);
+  }, [API_BASE_URL, actualHotelId]);
   const galleryImages = useMemo(() => {
     const images = [];
     if (hotel?.hotel_galleries?.length) {
