@@ -669,3 +669,27 @@ if (!function_exists('adminLanguage')) {
     return $language;
   }
 }
+
+if (!function_exists('getPaymentGatewayConfig')) {
+  function getPaymentGatewayConfig($gateway, $key = null)
+  {
+    try {
+      $gatewayInfo = \App\Models\PaymentGateway\OnlineGateway::where('keyword', $gateway)->first();
+      
+      if (!$gatewayInfo || $gatewayInfo->status != 1) {
+        return null;
+      }
+      
+      $information = json_decode($gatewayInfo->information, true);
+      
+      if ($key) {
+        return $information[$key] ?? null;
+      }
+      
+      return $information;
+    } catch (\Exception $e) {
+      \Log::warning("Could not load {$gateway} configuration: " . $e->getMessage());
+      return null;
+    }
+  }
+}

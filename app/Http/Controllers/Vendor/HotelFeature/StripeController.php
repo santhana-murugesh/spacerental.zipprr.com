@@ -47,17 +47,34 @@ class StripeController extends Controller
         $stripeTotal = $currencyInfo->base_currency_text === 'USD' ? $charge->price : $convertedTotal;
 
         try {
-            // initialize stripe
-            $stripe = new Stripe();
+            // Stripe configuration is now handled by PaymentGatewayServiceProvider
             $stripe = Stripe::make(Config::get('services.stripe.secret'));
 
             try {
 
-                // generate charge
+                // generate charge with required customer information for Indian export regulations
                 $charge = $stripe->charges()->create([
                     'source' => $request->stripeToken,
                     'currency' => 'USD',
-                    'amount'   => $stripeTotal
+                    'amount'   => $stripeTotal,
+                    'description' => 'Hotel Feature Payment',
+                    'receipt_email' => Auth::guard('vendor')->user()->email,
+                    // Required customer information for Indian export compliance
+                    'shipping' => [
+                        'name' => Auth::guard('vendor')->user()->name ?? 'Vendor',
+                        'address' => [
+                            'line1' => 'Vendor Address',
+                            'city' => 'Unknown',
+                            'state' => 'Unknown',
+                            'country' => 'IN'
+                        ]
+                    ],
+                    'metadata' => [
+                        'vendor_id' => Auth::guard('vendor')->user()->id,
+                        'vendor_name' => Auth::guard('vendor')->user()->name ?? 'Vendor',
+                        'vendor_email' => Auth::guard('vendor')->user()->email,
+                        'payment_type' => 'hotel_feature'
+                    ]
                 ]);
 
                 if ($charge['status'] == 'succeeded') {
