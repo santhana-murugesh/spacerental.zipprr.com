@@ -386,4 +386,41 @@ class VendorController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * API Logout method for vendors
+     */
+    public function apiLogout(Request $request)
+    {
+        try {
+            \Log::info('Vendor API Logout attempt');
+            
+            // Logout from vendor guard
+            Auth::guard('vendor')->logout();
+            
+            // Clear any vendor-related sessions
+            Session::forget('secret_login');
+            Session::forget('vendor_id');
+            Session::forget('vendor_data');
+            
+            // Clear vendor token cookie if it exists
+            if ($request->hasCookie('vendor_token')) {
+                Cookie::queue(Cookie::forget('vendor_token'));
+            }
+            
+            \Log::info('Vendor API Logout successful');
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Logout successful'
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Vendor API Logout error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Logout failed. Please try again.'
+            ], 500);
+        }
+    }
 }

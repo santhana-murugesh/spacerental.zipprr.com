@@ -1862,4 +1862,52 @@ class BookingController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Delete/cancel a booking owned by the authenticated user
+     */
+    public function deleteUserBooking($id)
+    {
+        try {
+            $user = auth('api')->user();
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not authenticated'
+                ], 401);
+            }
+
+            $booking = \App\Models\Booking::where('id', $id)
+                ->where('user_id', $user->id)
+                ->first();
+
+            if (!$booking) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Booking not found'
+                ], 404);
+            }
+
+            // If business rule requires: prevent deleting confirmed/completed
+            if (in_array($booking->order_status, ['confirmed', 'completed'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This booking cannot be cancelled'
+                ], 422);
+            }
+
+            $booking->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Booking deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Delete booking error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete booking'
+            ], 500);
+        }
+    }
 }

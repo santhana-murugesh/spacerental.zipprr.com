@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../../contexts/LanguageContext';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+
 function HeroSection({ title, subtitle }) {
     const [isLoaded, setIsLoaded] = useState(false);
     const [activeFeature, setActiveFeature] = useState(0);
@@ -10,6 +13,10 @@ function HeroSection({ title, subtitle }) {
         location: '',
         date: ''
     });
+
+  const handleDateChange = (date) => {
+    setSearchData({ ...searchData, date });
+  };
     const { t } = useTranslation();
     const { currentLanguage, languages, changeLanguage, isRTL, direction } = useLanguage();
     const [heroBg, setHeroBg] = useState(null);
@@ -340,13 +347,13 @@ function HeroSection({ title, subtitle }) {
                             </span>
                             <div className="w-full">
                                 <p className="font-semibold text-xs sm:text-sm md:text-base mb-2">{t('when')}</p>
-                                <input
-                                    type="text"
-                                    placeholder={t('anytime')}
-                                    value={searchData.date}
-                                    onChange={(e) => handleInputChange('date', e.target.value)}
-                                    className="bg-transparent placeholder-white/80 text-white focus:outline-none text-sm sm:text-base w-full border-b border-white/30 pb-2 focus:border-white/60 transition-colors lg:border-b-0"
-                                />
+                                <DatePicker
+          selected={searchData.date}
+          onChange={handleDateChange}
+          placeholderText={t('anytime')}
+          dateFormat="dd/MM/yyyy"
+          className="bg-transparent placeholder-white/80 text-white focus:outline-none text-sm sm:text-base w-full border-b border-white/30 pb-2 focus:border-white/60 transition-colors lg:border-b-0"
+        />
                             </div>
                         </div>
                         <button

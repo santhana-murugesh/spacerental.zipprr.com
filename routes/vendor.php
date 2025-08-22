@@ -300,4 +300,94 @@ Route::prefix('vendor')->middleware('auth:vendor', 'Demo', 'Deactive', 'email.ve
   Route::post('support-ticket/delete/{id}', 'Vendor\SupportTicketController@delete')->name('vendor.support_tickets.delete');
 });
 
+// Vendor API Routes - moved from api.php to avoid 419 CSRF errors
+Route::prefix('api/vendor')->middleware(['web', 'auth:vendor', 'Demo', 'Deactive', 'email.verify', 'vendorLang'])->group(function () {
+    // Vendor authentication and user management
+    Route::post('/login', 'FrontEnd\VendorController@apiLogin')->name('api.vendor.login');
+    Route::post('/signup', 'FrontEnd\VendorController@apiSignup')->name('api.vendor.signup');
+    Route::post('/resend-verification', 'FrontEnd\VendorController@resendVerificationEmail')->name('api.vendor.resend-verification');
+    Route::get('/user', 'FrontEnd\VendorController@getUser')->name('api.vendor.user');
+    Route::get('/auth-status', 'FrontEnd\VendorController@checkAuthStatus')->name('api.vendor.auth-status');
+    
+    // Hotel management API endpoints
+    Route::post('/hotels/store', 'Vendor\HotelController@store')->name('api.vendor.hotels.store');
+    Route::post('/hotels/update/{id}', 'Vendor\HotelController@update')->name('api.vendor.hotels.update');
+    Route::post('/hotels/delete/{id}', 'Vendor\HotelController@delete')->name('api.vendor.hotels.delete');
+    Route::post('/hotels/bulk-delete', 'Vendor\HotelController@bulkDelete')->name('api.vendor.hotels.bulk-delete');
+    Route::post('/hotels/update-status', 'Vendor\HotelController@updateStatus')->name('api.vendor.hotels.update-status');
+    Route::post('/hotels/update-counter-section/{id}', 'Vendor\HotelController@updateCounterInformation')->name('api.vendor.hotels.update-counter-section');
+    Route::post('/hotels/counter/delete', 'Vendor\HotelController@CounterDelete')->name('api.vendor.hotels.counter-delete');
+    Route::post('/hotels/amenities/update', 'Vendor\HotelController@amenitiesUpdate')->name('api.vendor.hotels.amenities-update');
+    Route::post('/hotels/images/store', 'Vendor\HotelController@imagesstore')->name('api.vendor.hotels.images-store');
+    Route::post('/hotels/images/remove', 'Vendor\HotelController@imagermv')->name('api.vendor.hotels.images-remove');
+    Route::post('/hotels/images/db-remove', 'Vendor\HotelController@imagedbrmv')->name('api.vendor.hotels.images-db-remove');
+    
+    // Holiday/Block-out dates management
+    Route::post('/holidays/store', 'Vendor\HolidayController@store')->name('api.vendor.holidays.store');
+    Route::post('/holidays/delete/{id}', 'Vendor\HolidayController@destroy')->name('api.vendor.holidays.delete');
+    Route::post('/holidays/bulk-destroy', 'Vendor\HolidayController@blukDestroy')->name('api.vendor.holidays.bulk-destroy');
+    
+    // Room management API endpoints
+    Route::post('/rooms/store', 'Vendor\RoomController@store')->name('api.vendor.rooms.store');
+    Route::post('/rooms/update/{id}', 'Vendor\RoomController@update')->name('api.vendor.rooms.update');
+    Route::post('/rooms/delete/{id}', 'Vendor\RoomController@delete')->name('api.vendor.rooms.delete');
+    Route::post('/rooms/bulk-delete', 'Vendor\RoomController@bulkDelete')->name('api.vendor.rooms.bulk-delete');
+    Route::post('/rooms/update-status', 'Vendor\RoomController@updateStatus')->name('api.vendor.rooms.update-status');
+    Route::post('/rooms/update-additional-service/{id}', 'Vendor\RoomController@updateAdditionalService')->name('api.vendor.rooms.update-additional-service');
+    Route::post('/rooms/amenities/update', 'Vendor\RoomController@amenitiesUpdate')->name('api.vendor.rooms.amenities-update');
+    Route::post('/rooms/images/store', 'Vendor\RoomController@imagesstore')->name('api.vendor.rooms.images-store');
+    Route::post('/rooms/images/remove', 'Vendor\RoomController@imagermv')->name('api.vendor.rooms.images-remove');
+    Route::post('/rooms/images/db-remove', 'Vendor\RoomController@imagedbrmv')->name('api.vendor.rooms.images-db-remove');
+    
+    // Coupon management
+    Route::post('/coupons/store', 'Vendor\CouponController@store')->name('api.vendor.coupons.store');
+    Route::post('/coupons/update', 'Vendor\CouponController@update')->name('api.vendor.coupons.update');
+    Route::post('/coupons/delete/{id}', 'Vendor\CouponController@destroy')->name('api.vendor.coupons.delete');
+    Route::post('/coupons/bulk-delete', 'Vendor\CouponController@bulkDestroy')->name('api.vendor.coupons.bulk-delete');
+    
+    // Custom pricing management
+    Route::post('/custom-pricing/store', 'Vendor\CustomPricingController@store')->name('api.vendor.custom-pricing.store');
+    Route::put('/custom-pricing/{id}/update', 'Vendor\CustomPricingController@update')->name('api.vendor.custom-pricing.update');
+    Route::any('/custom-pricing/delete-single/{id}', 'Vendor\CustomPricingController@destroySingle')->name('api.vendor.custom-pricing.delete-single');
+    
+    // Room bookings management
+    Route::post('/bookings/update-payment-status', 'Vendor\RoomBookingController@updatePaymentStatus')->name('api.vendor.bookings.update-payment-status');
+    Route::post('/bookings/update-booking', 'Vendor\RoomBookingController@updateBooking')->name('api.vendor.bookings.update-booking');
+    Route::post('/bookings/send-mail', 'Vendor\RoomBookingController@sendMail')->name('api.vendor.bookings.send-mail');
+    Route::post('/bookings/make-booking', 'Vendor\RoomBookingController@makeBooking')->name('api.vendor.bookings.make-booking');
+    
+    // Profile and settings
+    Route::post('/profile/update', 'Vendor\VendorController@updateProfile')->name('api.vendor.profile.update');
+    Route::post('/password/update', 'Vendor\VendorController@updated_password')->name('api.vendor.password.update');
+    Route::post('/theme/change', 'Vendor\VendorController@changeTheme')->name('api.vendor.theme.change');
+    Route::post('/logout', 'FrontEnd\VendorController@apiLogout')->name('api.vendor.logout');
+    
+    // Mail settings
+    Route::post('/mail-settings/update', 'Vendor\MAilSetController@updateMailToVendor')->name('api.vendor.mail-settings.update');
+    
+    // Support tickets
+    Route::post('/support-tickets/store', 'Vendor\SupportTicketController@store')->name('api.vendor.support-tickets.store');
+    Route::post('/support-tickets/reply/{id}', 'Vendor\SupportTicketController@ticketreply')->name('api.vendor.support-tickets.reply');
+    Route::post('/support-tickets/delete/{id}', 'Vendor\SupportTicketController@delete')->name('api.vendor.support-tickets.delete');
+    
+    // Withdraw management
+    Route::post('/withdraw/send-request', 'Vendor\VendorWithdrawController@send_request')->name('api.vendor.withdraw.send-request');
+    Route::post('/withdraw/bulk-delete', 'Vendor\VendorWithdrawController@bulkDelete')->name('api.vendor.withdraw.bulk-delete');
+    Route::post('/withdraw/delete', 'Vendor\VendorWithdrawController@Delete')->name('api.vendor.withdraw.delete');
+    
+    // Package and checkout
+    Route::post('/package/checkout', 'Vendor\VendorCheckoutController@checkout')->name('api.vendor.package.checkout');
+    Route::post('/payment/instructions', 'Vendor\VendorCheckoutController@paymentInstruction')->name('api.vendor.payment.instructions');
+});
+
+// Public vendor API routes (no authentication required)
+Route::prefix('api/vendor')->middleware(['web'])->group(function () {
+    Route::post('/login', 'FrontEnd\VendorController@apiLogin')->name('api.vendor.login.public');
+    Route::post('/signup', 'FrontEnd\VendorController@apiSignup')->name('api.vendor.signup.public');
+    Route::post('/resend-verification', 'FrontEnd\VendorController@resendVerificationEmail')->name('api.vendor.resend-verification.public');
+    Route::get('/user', 'FrontEnd\VendorController@getUser')->name('api.vendor.user.public');
+    Route::get('/auth-status', 'FrontEnd\VendorController@checkAuthStatus')->name('api.vendor.auth-status.public');
+    Route::post('/logout', 'FrontEnd\VendorController@apiLogout')->name('api.vendor.logout.public');
+});
+
 

@@ -62,9 +62,9 @@ class VerifyCsrfToken extends Middleware
     }
 
     // Extend CSRF token lifetime by refreshing the session
-    if ($request->session()->isStarted()) {
-      $request->session()->regenerateToken();
-    }
+    // if ($request->session()->isStarted()) {
+    //   $request->session()->regenerateToken();
+    // }
 
     return is_string($sessionToken) && is_string($token) && hash_equals($sessionToken, $token);
   }

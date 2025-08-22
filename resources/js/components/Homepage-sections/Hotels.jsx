@@ -4,16 +4,21 @@ import { FaHeart, FaRegHeart } from 'react-icons/fa';
 import { useAuth } from '../AuthContext';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { Login } from '../Login';
+import { Signup } from '../Signup';
+
+const API_BASE_URL =
+    window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+      ? import.meta.env.VITE_API_BASE_URL_LOCAL
+      : import.meta.env.VITE_API_BASE_URL;
 
 export const Hotels = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { currentLanguage, languages, changeLanguage, isRTL, direction } = useLanguage();
   
-  // Force English language for wishlist display
   const forceEnglishLanguage = () => {
     if (currentLanguage && currentLanguage.id !== 1) {
-      // Temporarily change to English (language_id = 1)
       const englishLanguage = languages.find(lang => lang.id === 1);
       if (englishLanguage) {
         changeLanguage(englishLanguage);
@@ -21,9 +26,8 @@ export const Hotels = () => {
     }
   };
 
-  // Override language to English for wishlist content
   const getWishlistLanguage = () => {
-    return 1; // Force English (language_id = 1)
+    return 1; 
   };
   const { user, loading: authLoading } = useAuth();
   const [activeCategory, setActiveCategory] = useState('All');
@@ -37,12 +41,9 @@ export const Hotels = () => {
   const [activeCardIndex, setActiveCardIndex] = useState(0);
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
+  const [showLogin, setShowLogin] = useState(false);
+  const [showSignUp, setShowSignUp] = useState(false);
   const scrollRef = useRef(null);
-
-  const API_BASE_URL =
-    window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-      ? import.meta.env.VITE_API_BASE_URL_LOCAL
-      : import.meta.env.VITE_API_BASE_URL;
 
   const CARD_WIDTH = 220; 
   const GAP_PX = 16; 
@@ -57,7 +58,6 @@ export const Hotels = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Force English language when component mounts to ensure English content
   useEffect(() => {
     forceEnglishLanguage();
   }, []);
@@ -66,7 +66,6 @@ export const Hotels = () => {
 
   const fetchHotelContentForWishlist = async (hotelIds) => {
     try {
-      // Fetch hotel content to ensure we have English content
       const routesResponse = await fetch(`${API_BASE_URL}/api/routes`);
       const routes = await routesResponse.json();
       
@@ -74,14 +73,13 @@ export const Hotels = () => {
       const hotelsData = await hotelsResponse.json();
       
       if (hotelsData.success && hotelsData.hotels) {
-        // Filter for English hotels (language_id = 1) or fallback to any available
+        
         const englishHotels = hotelsData.hotels.filter(hotel => 
           hotelIds.includes(hotel.id) && 
           (parseInt(hotel.language_id) === 1 || !hotel.language_id)
         );
         
         if (englishHotels.length > 0) {
-          // Update the hotels state with English content
           setHotels(prevHotels => {
             const updatedHotels = [...prevHotels];
             englishHotels.forEach(englishHotel => {
@@ -104,7 +102,6 @@ export const Hotels = () => {
       if (user) {
         const token = localStorage.getItem('jwt_token');
         if (!token) {
-          console.log('No JWT token found, falling back to localStorage');
           const stored = localStorage.getItem(`whitelisted_hotels_${user.id}`);
           if (stored) {
             const whitelistArray = JSON.parse(stored);
@@ -113,7 +110,6 @@ export const Hotels = () => {
           return;
         }
 
-        // Try to get from JWT-based API
         try {
           const response = await fetch(`${API_BASE_URL}/api/wishlist/hotels`, {
             headers: {
@@ -130,16 +126,13 @@ export const Hotels = () => {
               setWhitelistedHotels(new Set(hotelIds));
               localStorage.setItem(`whitelisted_hotels_${user.id}`, JSON.stringify(hotelIds));
               
-              // Also fetch hotel content to ensure we have English content
               await fetchHotelContentForWishlist(hotelIds);
               return;
             }
           }
         } catch (apiError) {
-          console.log('JWT API fetch failed, falling back to localStorage:', apiError);
         }
 
-        // Fallback to localStorage if API fails
         const stored = localStorage.getItem(`whitelisted_hotels_${user.id}`);
         if (stored) {
           const whitelistArray = JSON.parse(stored);
@@ -152,26 +145,25 @@ export const Hotels = () => {
   };
 
   const toggleWhitelist = async (hotelId, event) => {
-    event.stopPropagation();
-    console.log('toggleWhitelist called for hotel:', hotelId);
-    console.log('Current user:', user);
-    console.log('Auth loading:', authLoading);
+    console.log('🚀 toggleWhitelist function called!');
+    console.log('Hotel ID:', hotelId);
+    console.log('Event:', event);
     
-    if (authLoading) {
-      console.log('Auth is loading, returning early');
+    event.stopPropagation();
+    
+    if (!user) {
+      console.log('❌ No user found, showing login popup');
+      setShowLogin(true);
       return;
     }
 
-    if (!user) {
-      console.log('No user found, navigating to login');
-      navigate('/user/login');
-      return;
-    }
+    console.log('✅ User found:', user);
 
     const token = localStorage.getItem('jwt_token');
-    console.log('JWT token found:', token ? 'Yes' : 'No');
+    console.log('🔑 JWT Token:', token ? 'Found' : 'Not found');
+    
     if (!token) {
-      console.error('No JWT token found');
+      console.error('❌ No JWT token found');
       return;
     }
 
@@ -223,9 +215,7 @@ export const Hotels = () => {
         const categoriesResponse = await fetch(routes.hotelsCategories);
         const categoriesData = await categoriesResponse.json();
         
-        // Filter categories based on current language ID
         if (categoriesData && currentLanguage) {
-          // Use the language ID directly from currentLanguage
           let languageId = currentLanguage.id;
 
           if (languageId) {
@@ -243,10 +233,8 @@ export const Hotels = () => {
         const hotelsResponse = await fetch(routes.hotelsFilterByBounds);
         const hotelsData = await hotelsResponse.json();
         if (hotelsData.success) {
-          // For wishlist display, always prioritize English content
           let allHotels = hotelsData.hotels || [];
           
-          // First try to get English hotels (language_id = 1)
           const englishHotels = allHotels.filter(
             hotel => parseInt(hotel.language_id) === 1
           );
@@ -254,7 +242,6 @@ export const Hotels = () => {
           if (englishHotels.length > 0) {
             setHotels(englishHotels);
           } else {
-            // Fallback to current language or all hotels
             if (currentLanguage && currentLanguage.id) {
               const languageSpecificHotels = allHotels.filter(
                 hotel => parseInt(hotel.language_id) === parseInt(currentLanguage.id)
@@ -277,14 +264,15 @@ export const Hotels = () => {
   }, [currentLanguage]);
 
   useEffect(() => {
-    console.log('Hotels component useEffect - user:', user, 'authLoading:', authLoading);
-    if (user && !authLoading) {
-      console.log('Fetching whitelisted hotels for user:', user.id);
+    console.log('Hotels component - User state changed:', user);
+    console.log('Hotels component - Auth loading:', authLoading);
+    if (user) {
+      console.log('User is logged in, fetching whitelisted hotels...');
       fetchWhitelistedHotels();
     } else {
-      console.log('Not fetching whitelisted hotels - user:', user ? 'exists' : 'null', 'authLoading:', authLoading);
+      console.log('No user found, skipping wishlist fetch');
     }
-  }, [user, authLoading]);
+  }, [user]);
 
   const scroll = (direction) => {
     if (direction === 'left') {
@@ -513,24 +501,17 @@ export const Hotels = () => {
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        console.log('Heart button clicked for hotel:', hotel.id);
+                        console.log('❤️ HEART CLICKED! Hotel ID:', hotel.id);
+                        console.log('User state:', user);
+                        console.log('Auth loading:', authLoading);
+                        
+                        // Always allow the click, handle login redirect inside toggleWhitelist
                         toggleWhitelist(hotel.id, e);
                       }}
                       onMouseDown={(e) => e.stopPropagation()}
                       onMouseUp={(e) => e.stopPropagation()}
-                      disabled={authLoading}
-                      className={`absolute top-2 right-2 bg-white p-2 rounded-full shadow-md transition-all duration-200 z-50 ${
-                        authLoading 
-                          ? 'opacity-50 cursor-not-allowed' 
-                          : 'hover:shadow-lg cursor-pointer'
-                      }`}
-                      title={
-                        authLoading 
-                          ? "Loading..." 
-                          : whitelistedHotels.has(hotel.id) 
-                            ? "Remove from favorites" 
-                            : "Add to favorites"
-                      }
+                      className="absolute top-2 right-2 bg-white p-2 rounded-full shadow-md hover:shadow-lg transition-all duration-200 z-50 cursor-pointer"
+                      title="Click to add/remove from favorites"
                     >
                       {whitelistedHotels.has(hotel.id) ? (
                         <FaHeart className="w-4 h-4 md:w-5 md:h-5 text-red-500" />
@@ -650,6 +631,46 @@ export const Hotels = () => {
           →
         </button>
       </div>
+      
+      {/* Login Popup */}
+      {showLogin && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+          <Login
+            setShowLogin={setShowLogin}
+            setShowSignUp={(show) => {
+              if (show) {
+                setShowSignUp(true);
+                setShowLogin(false);
+              }
+            }}
+            onAuthSuccess={() => {
+              setShowLogin(false);
+              // Refresh the page or refetch user data
+              window.location.reload();
+            }}
+          />
+        </div>
+      )}
+      
+      {/* Signup Popup */}
+      {showSignUp && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+          <Signup
+            setShowSignUp={setShowSignUp}
+            setShowLogin={(show) => {
+              if (show) {
+                setShowLogin(true);
+                setShowSignUp(false);
+              }
+            }}
+            onAuthSuccess={() => {
+              setShowSignUp(false);
+              // Refresh the page or refetch user data
+              window.location.reload();
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 };
